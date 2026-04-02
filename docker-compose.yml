@@ -1,0 +1,37 @@
+services:
+  linkedin-mcp:
+    image: stickerdaniel/linkedin-mcp-server:latest
+    container_name: linkedin-mcp
+    ports:
+      - "8080:8080"
+    volumes:
+      - ~/.linkedin-mcp:/home/pwuser/.linkedin-mcp
+    command: >
+      --transport streamable-http
+      --host 0.0.0.0
+      --port 8080
+      --path /mcp
+      --timeout 15000
+    networks:
+      - cold-connect-net
+    restart: unless-stopped
+
+  cold-connect:
+    build: .
+    container_name: cold-connect
+    depends_on:
+      - linkedin-mcp
+    env_file:
+      - .env
+    environment:
+      MCP_SERVER_URL: http://linkedin-mcp:8080/mcp
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    networks:
+      - cold-connect-net
+    restart: unless-stopped
+
+networks:
+  cold-connect-net:
+    driver: bridge
